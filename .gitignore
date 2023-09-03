@@ -1,0 +1,14 @@
+# Excude these files from repo
+#
+*.DS_Store
+*.Rhistory
+*.RData
+*.swp
+*.swo
+
+*.csv
+*.tsv
+*.xlsx
+*.pdf
+*.fna
+*.fasta
