@@ -46,11 +46,11 @@ as.treedata(tree_543_long)
 tree_plot <- ggtree(data = claude_f__DSM_18226,
                aes(color=g)) + 
      geom_tiplab(size=2, aes(label= s, color=g)) + 
-     theme_tree(legend.posision = "bottom")
+     theme_tree2(legend.position = c(.1, .88))
     
 ggsave(plot=tree_plot,
        "../tree_plot1.png",
        device="png",
        height = 30,
-       width=30,
+       width=50,
        units="cm")
