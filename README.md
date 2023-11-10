@@ -17,9 +17,12 @@ in order to infer their phylogenetic similarity with other species in the tree.
 The taxonomy was transformed with the following oneliner:
 
 ```
-gawk -F"\t" '{taxon=$1; split($2,taxonomy, "; ") ; for (i in taxonomy){ split(taxonomy[i], classification,"__"); print taxon "\t" taxonomy[i] "\t" classification[1] "\t" classification[2]}}' gtdbtk.bac120.decorated.tree-taxonomy > gtdbtk.taxonomy_long.tsv
+gawk -F"\t" '{taxon=$1; split($2,taxonomy, "; ") ; print "gtdb_id" "\t" "classification_full" "\t" "classification" "\t" "taxonname" ; for (i in taxonomy){split(taxonomy[i], classification,"__"); print taxon "\t" taxonomy[i] "\t" classification[1] "\t" classification[2]}}' gtdbtk.bac120.decorated.tree-taxonomy > gtdbtk.taxonomy_long.tsv
 ```
-
+Quick look whether the assembly is in the tree.
+```
+gawk '{match($0,/543_assembly/,arr)}END{for (i in arr){print arr[i] "\t" arr[i,"start"] "\t" arr[i, "length"]}}' gtdbtk.bac120.decorated.tree
+```
 Then the results are loaded in R.
 
 ## Coding environment
