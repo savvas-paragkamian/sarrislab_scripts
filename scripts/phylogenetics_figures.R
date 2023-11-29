@@ -18,7 +18,9 @@ library(ggtree)
 library(tidytree)
 
 # read the taxonomy
-taxonomy <- read_delim( "../Assemblies_de_novo/infer/gtdbtk.taxonomy_long.tsv",
+# gawk -F"\t" '{taxon=$1; split($2,taxonomy, "; ") ; print "gtdb_id" "\t" "classification_full" "\t" "classification" "\t" "taxonname" ; for (i in taxonomy){split(taxonomy[i], classification,"__"); print taxon "\t" taxonomy[i] "\t" classification[1] "\t" classification[2]}}' gtdbtk.bac120.decorated.tree-taxonomy > gtdbtk.taxonomy_long.tsv
+
+taxonomy <- read_delim( "../bac3new_de_novo/infer/gtdbtk.taxonomy_long.tsv",
                        delim="\t",
                        col_names=T)
 # transform taxonomy to wide format
@@ -28,28 +30,29 @@ taxonomy_w <- taxonomy %>% group_by(gtdb_id, classification) %>%
     pivot_wider(names_from=classification, values_from=taxa)
 
 # load tree
-tree <- ape::read.tree(file = "../Assemblies_de_novo/infer/gtdbtk.bac120.decorated.tree")
-tree_taxonomy <- as_tibble(tree) %>% left_join(taxonomy_w, by=c("label"="gtdb_id"))
+tree <- ape::read.tree(file = "../bac3new_de_novo/gtdbtk.bac120.decorated.tree")
+tree_table <- read_delim( "../bac3new_de_novo/gtdbtk.bac120.decorated.tree-table", delim="\t")
+tree_taxonomy <- as_tibble(tree) %>%
+    left_join(taxonomy_w, by=c("label"="gtdb_id")) %>%
+    treeio::as.treedata()
 
 # filter the tree
 
-as_tibble(tree) %>% filter(grep("Bacilli",label))
+tree_bacilli <- as_tibble(tree) %>% filter(grepl("Bacilli",label))
 
 # it doesn't have a node for Bacilli.
 # most recent common ancestor (MRCA)
-nodes_assemblies <- tree_taxonomy %>%
+nodes_assemblies <- as_tibble(tree) %>%
     filter(label %in% c("179_assembly","337_assembly","342_assembly", "543_assembly"))
 
 assemblies_mrca <- MRCA(tree,nodes_assemblies$node )
 
-claude_mrca <- groupClade(as_tibble(tree), assemblies_mrca) %>%
-    filter(group==1) %>% 
-    left_join(taxonomy_w,
-              by=c("label"="gtdb_id")) %>% 
-    as.treedata()
+claude_mrca <- groupClade(tree_taxonomy, assemblies_mrca) %>%
+    filter(group==1) 
 
 write.tree(as.phylo(claude_mrca), file = "claude_mrca.tree", append = FALSE,
            digits = 10, tree.names = FALSE)
+
 # the node 82141 is the family
 claude_f__DSM_18226 <- groupClade(as_tibble(tree), 82141) %>%
     filter(group==1) %>% 
@@ -63,8 +66,9 @@ as.treedata(tree_long)
 # visualisation
 
 tree_plot_mrca <- ggtree(data = claude_mrca,
-               aes(color=g)) + 
+               aes(color=g),ladderize=F) + 
      geom_tiplab(size=2, aes(label= s, color=g)) + 
+#     geom_text(aes(label=branch.length)) + 
      theme_tree2(legend.position = c(.1, .88))
     
 ggsave(plot=tree_plot_mrca,
