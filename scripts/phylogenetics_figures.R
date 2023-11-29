@@ -43,15 +43,29 @@ tree_bacilli <- as_tibble(tree) %>% filter(grepl("Bacilli",label))
 # it doesn't have a node for Bacilli.
 # most recent common ancestor (MRCA)
 nodes_assemblies <- as_tibble(tree) %>%
-    filter(label %in% c("179_assembly","337_assembly","342_assembly", "543_assembly"))
+    filter(label %in% c("179_assembly", "543_assembly")) #"337_assembly"
 
+all_assemblies <- as_tibble(tree) %>%
+    filter(label %in% c("179_assembly", "543_assembly","337_assembly")) #"337_assembly"
+
+all_assemblies_m <- MRCA(tree,all_assemblies$node ) 
 assemblies_mrca <- MRCA(tree,nodes_assemblies$node )
 
-claude_mrca <- groupClade(tree_taxonomy, assemblies_mrca) %>%
-    filter(group==1) 
+tree_assemblies <- extract.clade(tree, assemblies_mrca) %>%
+    as_tibble() %>%
+    left_join(taxonomy_w, by=c("label"="gtdb_id")) %>%
+    as.treedata()
 
-write.tree(as.phylo(claude_mrca), file = "claude_mrca.tree", append = FALSE,
-           digits = 10, tree.names = FALSE)
+all_assemblies <- extract.clade(tree, all_assemblies_m) %>%
+    as_tibble() %>%
+    left_join(taxonomy_w, by=c("label"="gtdb_id")) %>%
+    as.treedata()
+
+#claude_mrca <- groupClade(tree_taxonomy, assemblies_mrca) %>%
+#    filter(group==1) 
+
+#write.tree(as.phylo(claude_mrca), file = "claude_mrca.tree", append = FALSE,
+#           digits = 10, tree.names = FALSE)
 
 # the node 82141 is the family
 claude_f__DSM_18226 <- groupClade(as_tibble(tree), 82141) %>%
@@ -60,20 +74,42 @@ claude_f__DSM_18226 <- groupClade(as_tibble(tree), 82141) %>%
               by=c("label"="gtdb_id")) %>% 
     as.treedata()
 
-tree_long <- as_tibble(tree)
-as.treedata(tree_long)
-
 # visualisation
 
-tree_plot_mrca <- ggtree(data = claude_mrca,
-               aes(color=g),ladderize=F) + 
-     geom_tiplab(size=2, aes(label= s, color=g)) + 
-#     geom_text(aes(label=branch.length)) + 
+tree_plot_mrca <- ggtree(tree_assemblies) + 
+     geom_tiplab(size=2, aes(as_ylab=TRUE, color=g)) + 
+#     geom_text(aes(label=branch.length, color=g)) + 
      theme_tree2(legend.position = c(.1, .88))
     
 ggsave(plot=tree_plot_mrca,
-       "../tree_plot_mrca.pdf",
+       "../tree_plot_mrca_gtdb.pdf",
        device="pdf",
-       height = 200,
-       width=150,
+       height = 80,
+       width=40,
        units="cm", limitsize = F)
+
+tree_plot_mrca2 <- ggtree(tree_assemblies) + 
+     geom_tiplab(size=2, aes(label=s, color=g)) + 
+#     geom_text(aes(label=branch.length, color=g)) + 
+     theme_tree2(legend.position = c(.1, .88))
+
+ggsave(plot=tree_plot_mrca2,
+       "../tree_plot_mrca_s.pdf",
+       device="pdf",
+       height = 80,
+       width=40,
+       units="cm", limitsize = F)
+
+
+tree_plot_mrca3 <- ggtree(all_assemblies) + 
+     geom_tiplab(size=2, aes(label=s, color=g)) + 
+#     geom_text(aes(label=branch.length, color=g)) + 
+     theme_tree2(legend.position = c(.1, .88))
+
+ggsave(plot=tree_plot_mrca3,
+       "../tree_plot_mrca_3.pdf",
+       device="pdf",
+       height = 100,
+       width=40,
+       units="cm", limitsize = F)
+
