@@ -16,8 +16,50 @@ library(tidyverse)
 library(ape)
 library(ggtree)
 library(tidytree)
+library(treeio)
 
+# kushneria
+#
+taxonomy <- read_tsv("../kushneria_denovo/gtdbtk.bac120.decorated.tree-taxonomy", col_names = c("genome_id", "taxonomy"))
+taxonomy_table <- read_tsv("../kushneria_denovo/gtdbtk.bac120.decorated.tree-table")
+
+family_genomes <- taxonomy %>%
+  filter(str_detect(taxonomy, "f__Halomonadaceae")) |>
+  pull(genome_id)
+
+## read the de novo tree
+tree <- read.tree("../kushneria_denovo/gtdbtk.bac120.decorated.tree")
+
+matching_tips <- intersect(tree$tip.label, family_genomes)
+Halomonadaceae_tree <- keep.tip(tree, matching_tips)
+
+Halomonadaceae_taxonomy <- taxonomy |>
+    filter(genome_id %in% family_genomes) |>
+    mutate(genus=str_extract(taxonomy, "g__[^;]+")) |>
+    mutate(species=str_extract(taxonomy, "s__[^;]+")) |>
+    mutate(species= if_else(is.na(species),genome_id,species))
+
+tree_df <- data.frame(label = Halomonadaceae_tree$tip.label)
+
+# Join with taxonomy
+tip_data <- left_join(tree_df, Halomonadaceae_taxonomy, by = c("label" = "genome_id"))
+
+Halomonadaceae_tree_p <- ggtree(Halomonadaceae_tree) %<+% tip_data + 
+  geom_tippoint(aes(color = genus), size = 2) +
+  geom_tiplab(aes(label = species), size = 1.5) +
+  theme(legend.position = "right")
+
+ggsave(plot=Halomonadaceae_tree_p,
+       "../Halomonadaceae_tree_p.pdf",
+       device="pdf",
+       height = 50,
+       width=30,
+       units="cm", limitsize = F)
+
+
+# bacillus 
 # read the taxonomy
+
 # gawk -F"\t" '{taxon=$1; split($2,taxonomy, "; ") ; print "gtdb_id" "\t" "classification_full" "\t" "classification" "\t" "taxonname" ; for (i in taxonomy){split(taxonomy[i], classification,"__"); print taxon "\t" taxonomy[i] "\t" classification[1] "\t" classification[2]}}' gtdbtk.bac120.decorated.tree-taxonomy > gtdbtk.taxonomy_long.tsv
 
 taxonomy <- read_delim( "../bac3new_de_novo/infer/gtdbtk.taxonomy_long.tsv",
