@@ -47,7 +47,7 @@ tip_data <- left_join(tree_df, Halomonadaceae_taxonomy, by = c("label" = "genome
 Halomonadaceae_tree_p <- ggtree(Halomonadaceae_tree) %<+% tip_data + 
   geom_tippoint(aes(color = genus), size = 2) +
   geom_tiplab(aes(label = species), size = 1.5) +
-  theme(legend.position = "right")
+  theme(legend.position = "inside",legend.position.inside = c(0.2,0.7))
 
 ggsave(plot=Halomonadaceae_tree_p,
        "../Halomonadaceae_tree_p.pdf",
@@ -56,6 +56,16 @@ ggsave(plot=Halomonadaceae_tree_p,
        width=30,
        units="cm", limitsize = F)
 
+## Kushneria only
+
+
+ggsave(plot=Halomonadaceae_tree_p,
+       "../Halomonadaceae_tree_p.png",
+       device="png",
+       dpi=300,
+       height = 60,
+       width=40,
+       units="cm", limitsize = F)
 
 # bacillus 
 # read the taxonomy
