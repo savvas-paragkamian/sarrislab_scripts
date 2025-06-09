@@ -18,6 +18,46 @@ library(ggtree)
 library(tidytree)
 library(treeio)
 
+# katerina
+
+taxonomy <- read_tsv("../katerina/gtdbtk.bac120.decorated.tree-taxonomy", col_names = c("genome_id", "taxonomy"))
+taxonomy_table <- read_tsv("../katerina/gtdbtk.bac120.decorated.tree-table")
+
+
+family_genomes <- taxonomy %>%
+  filter(str_detect(taxonomy, "f__Sphingobacteriaceae")) |>
+  pull(genome_id)
+
+
+## read the de novo tree
+tree <- read.tree("../katerina/gtdbtk.bac120.decorated.tree")
+
+matching_tips <- intersect(tree$tip.label, family_genomes)
+Sphingobacteriaceae_tree <- keep.tip(tree, matching_tips)
+
+Sphingobacteriaceae_taxonomy <- taxonomy |>
+    filter(genome_id %in% family_genomes) |>
+    mutate(genus=str_extract(taxonomy, "g__[^;]+")) |>
+    mutate(species=str_extract(taxonomy, "s__[^;]+")) |>
+    mutate(species= if_else(is.na(species),genome_id,species))
+
+tree_df <- data.frame(label = Sphingobacteriaceae_tree$tip.label)
+
+# Join with taxonomy
+tip_data <- left_join(tree_df, Sphingobacteriaceae_taxonomy, by = c("label" = "genome_id"))
+
+tree_p <- ggtree(Sphingobacteriaceae_tree) %<+% tip_data + 
+  geom_tippoint(aes(color = genus), size = 2) +
+  geom_tiplab(aes(label = species), size = 1.5) +
+  theme(legend.position = "inside",legend.position.inside = c(0.2,0.7))
+
+ggsave(plot=tree_p,
+       "../Sphingobacteriaceae_tree_p.pdf",
+       device="pdf",
+       height = 50,
+       width=30,
+       units="cm", limitsize = F)
+
 # kushneria
 #
 taxonomy <- read_tsv("../kushneria_denovo/gtdbtk.bac120.decorated.tree-taxonomy", col_names = c("genome_id", "taxonomy"))
