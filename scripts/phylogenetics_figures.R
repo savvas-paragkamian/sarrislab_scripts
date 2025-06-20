@@ -17,6 +17,7 @@ library(ape)
 library(ggtree)
 library(tidytree)
 library(treeio)
+library(ggtreeExtra)
 
 # katerina
 
@@ -28,12 +29,17 @@ family_genomes <- taxonomy %>%
   filter(str_detect(taxonomy, "f__Sphingobacteriaceae")) |>
   pull(genome_id)
 
+genus_genomes <- taxonomy %>%
+  filter(str_detect(taxonomy, "g__Olivibacter|g__Pseudosphingobacterium")) |>
+  pull(genome_id)
 
 ## read the de novo tree
 tree <- read.tree("../katerina/gtdbtk.bac120.decorated.tree")
 
 matching_tips <- intersect(tree$tip.label, family_genomes)
 Sphingobacteriaceae_tree <- keep.tip(tree, matching_tips)
+matching_tips_g <- intersect(tree$tip.label, genus_genomes)
+Pseudosphingobacterium_tree <- keep.tip(tree, matching_tips_g)
 
 Sphingobacteriaceae_taxonomy <- taxonomy |>
     filter(genome_id %in% family_genomes) |>
@@ -56,6 +62,42 @@ ggsave(plot=tree_p,
        device="pdf",
        height = 50,
        width=30,
+       units="cm", limitsize = F)
+##### genus
+matching_tips_g <- intersect(tree$tip.label, genus_genomes)
+Pseudosphingobacterium_tree <- keep.tip(tree, matching_tips_g)
+
+genus_taxonomy <- taxonomy |>
+    filter(genome_id %in% genus_genomes) |>
+    mutate(genus=str_extract(taxonomy, "g__[^;]+")) |>
+    mutate(species=str_extract(taxonomy, "s__[^;]+")) |>
+    mutate(species= if_else(is.na(species),genome_id,species))
+
+tree_gene_df <- data.frame(label = Pseudosphingobacterium_tree$tip.label)
+
+# Join with taxonomy
+tip_data <- left_join(tree_df, genus_taxonomy, by = c("label" = "genome_id"))
+
+tree_p <- ggtree(Pseudosphingobacterium_tree,layout = "circular") %<+% tip_data + 
+  geom_tippoint(aes(color = genus),size=8) +
+  geom_tiplab(
+    aes(label = species),
+    size = 2.5,
+    align = TRUE,     # extend labels radially outward
+    linesize = 0.2,
+    offset = 0.02      # push labels slightly outward from tips
+  ) +
+  #kcoord_cartesian(clip = "off") +  # allows labels outside plot boundary
+  theme(legend.position = "bottom",
+        plot.margin = margin(3, 3, 3, 3, "cm")
+
+  ) 
+
+ggsave(plot=tree_p,
+       "../Pseudosphingobacterium_tree_p.png",
+       device="png",
+       height = 30,
+       width = 25,
        units="cm", limitsize = F)
 
 # kushneria
