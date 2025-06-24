@@ -78,26 +78,28 @@ tree_gene_df <- data.frame(label = Pseudosphingobacterium_tree$tip.label)
 # Join with taxonomy
 tip_data <- left_join(tree_df, genus_taxonomy, by = c("label" = "genome_id"))
 
-tree_p <- ggtree(Pseudosphingobacterium_tree,layout = "circular") %<+% tip_data + 
-  geom_tippoint(aes(color = genus),size=8) +
+xlim_tree <- max(node.depth.edgelength(Pseudosphingobacterium_tree)) + 0.08
+tree_p <- ggtree(Pseudosphingobacterium_tree,layout = "rectangular") %<+% tip_data + 
+  geom_tippoint(aes(color = genus),size=6) +
   geom_tiplab(
     aes(label = species),
-    size = 2.5,
+    size = 4,
     align = TRUE,     # extend labels radially outward
     linesize = 0.2,
-    offset = 0.02      # push labels slightly outward from tips
+    offset = 0.01      # push labels slightly outward from tips
   ) +
-  #kcoord_cartesian(clip = "off") +  # allows labels outside plot boundary
+  coord_cartesian(clip = "off") +  # allows labels outside plot boundary
+  xlim(0, xlim_tree) +
   theme(legend.position = "bottom",
-        plot.margin = margin(3, 3, 3, 3, "cm")
+        plot.margin = margin(1,1,1,1, "cm")
 
   ) 
 
 ggsave(plot=tree_p,
        "../Pseudosphingobacterium_tree_p.png",
        device="png",
-       height = 30,
-       width = 25,
+       height = 15,
+       width = 20,
        units="cm", limitsize = F)
 
 # kushneria
